@@ -5,13 +5,13 @@ class FractalDrawer {
         var int x, y, iterations;
         var boolean ok;
 
-        let scale = Float.fromRaw(true, 73, -9);
+        let scale = Float.fromRaw(true, 73, -10);
 
         let y = -resolution;
-        while (y > -65) {
+        while (y > -129) {
             let x = -256;
             while (x < 256) {
-                let sx = Float.fromInt(x - 300 + (resolution / 2));
+                let sx = Float.fromInt(x - 128 + (resolution / 2));
                 let sy = Float.fromInt(y + (resolution / 2));
                 let c = Complex.fromRaw(
                     scale.multiply(sx),
