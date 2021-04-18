@@ -1,0 +1,102 @@
+class GameOfLife {
+    field Array board, scratchboard;
+    field int width, height, area, cellSizeInPixels;
+
+    constructor GameOfLife new(int cellSize) {
+        let cellSizeInPixels = cellSize;
+        let width = 512 / cellSize;
+        let height = 256 / cellSize;
+        let area = width * height;
+        let board = Array.new(width * height);
+        let scratchboard = Array.new(width * height);
+        return this;
+    }
+
+    method void setCell(int x, int y, boolean alive) {
+        let board[y * width + x] = alive;
+        return;
+    }
+
+    method boolean getCellByIndex(int index) {
+        if (index < 0) {
+            let index = index + area;
+        }
+        if (~(index < area)) {
+            let index = index - area;
+        }
+        return board[index];
+    }
+
+    method void randomize() {
+        var int random, i;
+        var boolean nextBit;
+        // Linear feedback shift register
+        let random = 1;
+        let i = 0;
+        while (i < area) {
+            // Taps are 3, 5, 7, 11
+            let nextBit = (random & 4 = 4) = (random & 16 = 16) = (random & 64 = 64) = (random & 1024 = 1024);
+            let board[i] = nextBit;
+            let random = (random & 8191) * 2;
+            if (nextBit) {
+                let random = random + 1;
+            }
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void performSimulationTick() {
+        var Array swapTemp;
+        var int i, neighborhood;
+        let i = 0;
+        while (i < area) {
+            let neighborhood = 0;
+            if (getCellByIndex(i + 1)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i - 1)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i + width)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i + width + 1)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i + width - 1)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i - width)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i - width + 1)) { let neighborhood = neighborhood + 1; }
+            if (getCellByIndex(i - width - 1)) { let neighborhood = neighborhood + 1; }
+            // If the cell used to be alive...
+            if (board[i]) {
+                // Stay alive if it has 2 or 3 neighbors.
+                let scratchboard[i] = (neighborhood = 2) | (neighborhood = 3);
+            } else {
+                // Become alive if it has 3 neighbors.
+                let scratchboard[i] = neighborhood = 3;
+            }
+            let i = i + 1;
+        }
+        // We don't need the old board data but we do need the array that
+        // is storing it.
+        let swapTemp = board;
+        let board = scratchboard;
+        let scratchboard = swapTemp;
+        return;
+    }
+
+    method void draw() {
+        var int x, y, i;
+        let y = 0;
+        let i = 0;
+        while (y < height) {
+            let x = 0;
+            while (x < width) {
+                do Screen.setColor(board[i]);
+                do Screen.drawRectangle(
+                    x * cellSizeInPixels, 
+                    y * cellSizeInPixels, 
+                    (x + 1) * cellSizeInPixels - 1, 
+                    (y + 1) * cellSizeInPixels - 1
+                );
+                let x = x + 1;
+                let i = i + 1;
+            }
+            let y = y + 1;
+        }
+        return;
+    }
+}

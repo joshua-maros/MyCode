@@ -6,13 +6,22 @@
 /** Hello World program. */
 class Main {
     function void main() {
-        var int step;
-        let step = 64;
-        while (step > 0) {
-            // do Screen.clearScreen();
-            do FractalDrawer.draw(step);
-            let step = step / 2;
+        // var int step;
+        // let step = 64;
+        // while (step > 0) {
+        //     // do Screen.clearScreen();
+        //     do FractalDrawer.draw(step);
+        //     let step = step / 2;
+        // }
+
+        var GameOfLife gol;
+        let gol = GameOfLife.new(8);
+        do gol.randomize();
+        while (true) {
+            do gol.performSimulationTick();
+            do gol.draw();
         }
+        do Output.printString("Done");
 
         return;
     }
