@@ -12,11 +12,6 @@ class GameOfLife {
         return this;
     }
 
-    method void setCell(int x, int y, boolean alive) {
-        let board[y * width + x] = alive;
-        return;
-    }
-
     method boolean getCellByIndex(int index) {
         if (index < 0) {
             let index = index + area;
