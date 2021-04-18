@@ -15,7 +15,7 @@ class Main {
         // }
 
         var GameOfLife gol;
-        let gol = GameOfLife.new(8);
+        let gol = GameOfLife.new(4);
         do gol.randomize();
         while (true) {
             do gol.performSimulationTick();

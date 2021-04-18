@@ -1,30 +1,60 @@
 class GameOfLife {
-    field Array board, scratchboard;
+    field Array board, scratchboard, masks;
     field int width, height, area, cellSizeInPixels;
 
     constructor GameOfLife new(int cellSize) {
+        var int mask, index;
         let cellSizeInPixels = cellSize;
         let width = 512 / cellSize;
         let height = 256 / cellSize;
         let area = width * height;
-        let board = Array.new(width * height);
-        let scratchboard = Array.new(width * height);
+        let board = Array.new(area / 8);
+        let scratchboard = Array.new(area / 8);
+        let masks = Array.new(8);
+        let mask = 1;
+        let index = 0;
+        while (index < 8) {
+            let masks[index] = mask;
+            let mask = mask * 2;
+            let index = index + 1;
+        }
         return this;
     }
 
-    method void setCell(int x, int y, boolean alive) {
-        let board[y * width + x] = alive;
+    // Writes to the scratch board.
+    method void setCellByIndex(int index, boolean value) {
+        var int mask;
+        let mask = masks[index & 7];
+        let index = index / 8;
+        if (value) {
+            let scratchboard[index] = scratchboard[index] | mask;
+        } else {
+            let scratchboard[index] = scratchboard[index] & (~mask);
+        }
         return;
     }
 
+    // Reads from the currently presented board.
     method boolean getCellByIndex(int index) {
+        var int mask;
         if (index < 0) {
             let index = index + area;
         }
         if (~(index < area)) {
             let index = index - area;
         }
-        return board[index];
+        let mask = masks[index & 7];
+        let index = index / 8;
+        return board[index] & mask = mask;
+    }
+
+    // Swaps the presented board and the scratchboard.
+    method void swapBoards() {
+        var Array swapTemp;
+        let swapTemp = board;
+        let board = scratchboard;
+        let scratchboard = swapTemp;
+        return;
     }
 
     method void randomize() {
@@ -36,19 +66,21 @@ class GameOfLife {
         while (i < area) {
             // Taps are 3, 5, 7, 11
             let nextBit = (random & 4 = 4) = (random & 16 = 16) = (random & 64 = 64) = (random & 1024 = 1024);
-            let board[i] = nextBit;
+            do setCellByIndex(i, nextBit);
             let random = (random & 8191) * 2;
             if (nextBit) {
                 let random = random + 1;
             }
             let i = i + 1;
         }
+        do swapBoards();
+        do draw();
         return;
     }
 
     method void performSimulationTick() {
-        var Array swapTemp;
         var int i, neighborhood, x, y;
+        var boolean value;
         let i = 0;
         while (i < area) {
             let neighborhood = 0;
@@ -61,15 +93,16 @@ class GameOfLife {
             if (getCellByIndex(i - width + 1)) { let neighborhood = neighborhood + 1; }
             if (getCellByIndex(i - width - 1)) { let neighborhood = neighborhood + 1; }
             // If the cell used to be alive...
-            if (board[i]) {
+            if (getCellByIndex(i)) {
                 // Stay alive if it has 2 or 3 neighbors.
-                let scratchboard[i] = (neighborhood = 2) | (neighborhood = 3);
+                let value = (neighborhood = 2) | (neighborhood = 3);
             } else {
                 // Become alive if it has 3 neighbors.
-                let scratchboard[i] = neighborhood = 3;
+                let value = neighborhood = 3;
             }
-            if (~(scratchboard[i] = board[i])) {
-                do Screen.setColor(scratchboard[i]);
+            do setCellByIndex(i, value);
+            if (~(value = getCellByIndex(i))) {
+                do Screen.setColor(value);
                 let y = i / width;
                 let x = i - (y * width);
                 do Screen.drawRectangle(
@@ -81,11 +114,7 @@ class GameOfLife {
             }
             let i = i + 1;
         }
-        // We don't need the old board data but we do need the array that
-        // is storing it.
-        let swapTemp = board;
-        let board = scratchboard;
-        let scratchboard = swapTemp;
+        do swapBoards();
         return;
     }
 
@@ -96,7 +125,7 @@ class GameOfLife {
         while (y < height) {
             let x = 0;
             while (x < width) {
-                do Screen.setColor(board[i]);
+                do Screen.setColor(getCellByIndex(i));
                 do Screen.drawRectangle(
                     x * cellSizeInPixels, 
                     y * cellSizeInPixels, 
