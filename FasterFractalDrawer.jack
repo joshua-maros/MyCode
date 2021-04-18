@@ -1,0 +1,113 @@
+class FasterFractalDrawer {
+    function void draw(int step) {
+        // A/B numbers are two-part fixed-point decimals, 
+        // basically value = value_a + value_b / 32768.
+        var int x, y, zx1a, zx1b, zy1a, zy1b, zx2a, zx2b, zy2a, zy2b, cxb, cyb, iterations, tempg, temph;
+        // sqrt(16384) = 128
+        // 256 * 128 = 32768
+        // 128 * 128 = 16384
+        var boolean ok;
+        let y = 0;
+        while (y < 256) {
+            let x = 0;
+            while (x < 512) {
+                let cxb = x * 6 + 5734;
+                let cyb = y * 6 + 2785;
+                let zx1a = 0;
+                let zx1b = 0;
+                let zy1a = 0;
+                let zy1b = 0;
+                let iterations = 20;
+                let ok = true;
+                while (ok & (iterations > 0)) {
+                    // znext = z^2 + c where z and c are complex numbers.
+
+                    let tempg = zx1b / 128;
+                    let temph = zy1b / 128;
+
+                    // zx2 = zx1 * zx1 - (zy1 * zy1) + cx
+                    let zx2a = ((zx1a * zx1a) - (zy1a * zy1a)) /* + cxa (0) */;
+                    let zx2b = (tempg * tempg) - (temph * temph) + cxb;
+                    if (zx2b > 16383) {
+                        let zx2b = zx2b - 16384;
+                        // Carry.
+                        let zx2a = zx2a + 1;
+                    }
+                    if (zx2b < -16383) {
+                        let zx2b = zx2b + 16384;
+                        // Carry.
+                        let zx2a = zx2a - 1;
+                    }
+                    // Make sure zx2a and zx2b have the same sign.
+                    if ((zx2a > 0) & (zx2b < 0)) {
+                        let zx2b = zx2b + 16384;
+                        let zx2a = zx2a - 1;
+                    }
+                    if ((zx2a < 0) & (zx2b > 0)) {
+                        let zx2b = zx2b - 16384;
+                        let zx2a = zx2a + 1;
+                    }
+
+                    // zy2 = 2 * zx1 * zy1 + cy
+                    let zy2a = (zx1a * zy1a * 2) /* + cya (0) */;
+                    let zy2b = 2 * tempg * temph;
+                    if (zy2b > 16383) {
+                        let zy2b = zy2b - 16384;
+                        // Carry.
+                        let zy2a = zy2a + 1;
+                    }
+                    if (zy2b < -16383) {
+                        let zy2b = zy2b + 16384;
+                        // Carry.
+                        let zy2a = zy2a - 1;
+                    }
+                    // Make sure zy2a and zy2b have the same sign.
+                    if ((zy2a > 0) & (zy2b < 0)) {
+                        let zy2b = zy2b + 16384;
+                        let zy2a = zy2a - 1;
+                    }
+                    if ((zy2a < 0) & (zy2b > 0)) {
+                        let zy2b = zy2b - 16384;
+                        let zy2a = zy2a + 1;
+                    }
+                    let zy2b = zy2b + cyb;
+                    if (zy2b > 16383) {
+                        let zy2b = zy2b - 16384;
+                        // Carry.
+                        let zy2a = zy2a + 1;
+                    }
+                    if (zy2b < -16383) {
+                        let zy2b = zy2b + 16384;
+                        // Carry.
+                        let zy2a = zy2a - 1;
+                    }
+                    // Make sure zy2a and zy2b have the same sign.
+                    if ((zy2a > 0) & (zy2b < 0)) {
+                        let zy2b = zy2b + 16384;
+                        let zy2a = zy2a - 1;
+                    }
+                    if ((zy2a < 0) & (zy2b > 0)) {
+                        let zy2b = zy2b - 16384;
+                        let zy2a = zy2a + 1;
+                    }
+
+                    let zx1a = zx2a;
+                    let zx1b = zx2b;
+                    let zy1a = zy2a;
+                    let zy1b = zy2b;
+
+                    let iterations = iterations - 1;
+                    if ((zx1a > 128) | (zx1a < -128) | (zy1a > 128) | (zy1a < -128)) {
+                        let ok = false;
+                    }
+                }
+                do Screen.setColor(ok);
+                do Screen.drawRectangle(x, y, x + step - 1, y + step - 1);
+                let x = x + step;
+            }
+            let y = y + step;
+        }
+
+        return;
+    }
+}

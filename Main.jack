@@ -19,9 +19,15 @@ class Main {
         do gol.randomize();
         while (true) {
             do gol.performSimulationTick();
-            // do gol.draw();
         }
-        do Output.printString("Done");
+
+        // var int step;
+        // let step = 64;
+        // while (step > 0) {
+        //     // do Screen.clearScreen();
+        //     do FasterFractalDrawer.draw(step);
+        //     let step = step / 2;
+        // }
 
         return;
     }
