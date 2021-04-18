@@ -1,0 +1,72 @@
+class Complex {
+    field Float real, imaginary;
+
+    constructor Complex fromRaw(Float r, Float i) {
+        let real = r;
+        let imaginary = i;
+        return this;
+    }
+
+    constructor Complex fromInt(int number) {
+        let real = Float.fromInt(number);
+        let imaginary = Float.fromInt(0);
+        return this;
+    }
+
+    method Float getReal() {
+        return real;
+    }
+
+    method Float getImaginary() {
+        return imaginary;
+    }
+
+    method Complex add(Complex rhs) {
+        return Complex.fromRaw(
+            real.add(rhs.getReal()), 
+            imaginary.add(rhs.getImaginary())
+        );
+    }
+
+    method Complex multiply(Complex rhs) {
+        // Compute using FOIL
+        var Float rr, ri, ir, ii, ii2, neg1;
+        var Complex result;
+        let rr = real.multiply(rhs.getReal());
+        let ri = real.multiply(rhs.getImaginary());
+        let ir = imaginary.multiply(rhs.getReal());
+        let ii2 = imaginary.multiply(rhs.getImaginary());
+        let neg1 = Float.fromInt(-1);
+        let ii = ii2.multiply(neg1);
+        let result = Complex.fromRaw(
+            rr.add(ii),
+            ri.add(ir)
+        );
+        do rr.dispose();
+        do ri.dispose();
+        do ir.dispose();
+        do ii.dispose();
+        do ii2.dispose();
+        do neg1.dispose();
+        return result;
+    }
+
+    method Float abs() {
+        var Float x, x2, x3, r;
+        let x = real.multiply(real);
+        let x2 = imaginary.multiply(imaginary);
+        let x3 = x.add(x2);
+        let r = x3.sqrt();
+        do x.dispose();
+        do x2.dispose();
+        do x3.dispose();
+        return r;
+    }
+
+    method void dispose() {
+        do real.dispose();
+        do imaginary.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

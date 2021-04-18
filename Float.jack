@@ -1,0 +1,191 @@
+// Hacky software floating point implementation.
+// Unlike IEEE floats, this does not have a pretend bit in front:
+// 0.fraction * 2 ^ exponent
+// (rather than 1.fraction...)
+class Float {
+    field boolean isPositive;
+    field int fraction, exponent;
+
+    constructor Float fromRaw(boolean s, int f, int e) {
+        let isPositive = s;
+        let fraction = f;
+        let exponent = e;
+        do normalize();
+        return this;
+    }
+
+    constructor Float zero() {
+        let isPositive = true;
+        let fraction = 0;
+        let exponent = 0;
+        return this;
+    }
+
+    constructor Float fromInt(int value) {
+        if (value = 0) {
+            let isPositive = true;
+            let fraction = 0;
+            let exponent = 0;
+            return this;
+        }
+        let exponent = 0;
+        let fraction = value;
+        let isPositive = true;
+        if (value < 0) {
+            let isPositive = false;
+            let fraction = -value;
+        }
+        do normalize();
+        return this;
+    }
+
+    method void normalize() {
+        var int mask;
+        if (fraction = 0) {
+            let exponent = 0;
+            return;
+        }
+        // Only the most significant bit.
+        let mask = 16384;
+        // Decrease exponent and shift fraction left until the MSB of the number
+        // gets shifted to the MSB of an integer.
+        while (~(mask & fraction) & ~(fraction = 0)) {
+            let exponent = exponent - 1;
+            let fraction = fraction * 2;
+        }
+        return;
+    }
+
+    method boolean getSign() {
+        return isPositive;
+    }
+
+    method int getFraction() {
+        return fraction;
+    }
+
+    method int getExponent() {
+        return exponent;
+    }
+
+    method void print() {
+        if (isPositive) {
+            do Output.printString("+");
+        } else {
+            do Output.printString("-");
+        }
+        do Output.printInt(fraction);
+        do Output.printString("x2^");
+        do Output.printInt(exponent);
+        do Output.println();
+        return;
+    }
+
+    method Float add(Float rhs) {
+        var Float bigger, smaller;
+        var int smallerFraction, smallerExponent;
+        var int finalFraction, finalExponent;
+        var boolean finalSign;
+        if (fraction = 0) {
+            return Float.fromRaw(rhs.getSign(), rhs.getFraction(), rhs.getExponent());
+        }
+        if (rhs.getFraction() = 0) {
+            return Float.fromRaw(isPositive, fraction, exponent);
+        }
+        if (exponent > rhs.getExponent()) {
+            let bigger = this;
+            let smaller = rhs;
+        } else {
+            let bigger = rhs;
+            let smaller = this;
+        }
+        let smallerFraction = smaller.getFraction();
+        let smallerExponent = smaller.getExponent();
+        // Shift the fractional part so that it is using the same
+        // exponent as the bigger float. 
+        while (smallerExponent < bigger.getExponent()) {
+            let smallerFraction = smallerFraction / 2;
+            let smallerExponent = smallerExponent + 1;
+        }
+        let finalSign = bigger.getSign();
+        if (bigger.getSign() = smaller.getSign()) {
+            // Same direction, just add them.
+            let finalFraction = bigger.getFraction() / 2 + smallerFraction / 2;
+        } else {
+            let finalFraction = bigger.getFraction() / 2 - smallerFraction / 2;
+        }
+        if (finalFraction < 0) {
+            let finalFraction = -1 * finalFraction;
+            let finalSign = ~finalSign;
+        }
+        let finalExponent = bigger.getExponent() + 1;
+        return Float.fromRaw(finalSign, finalFraction, finalExponent);
+    }
+
+    // Increases the exponent by 1.
+    method void _mulByTwo() {
+        let exponent = exponent + 1;
+        return;
+    }
+
+    // The basic idea of this is to do it like multiplication on paper, multiply 
+    // this by each of the bits (digits) in RHS.
+    method Float multiply(Float rhs) {
+        var Float result, part, newResult;
+        var int mask;
+        let result = Float.zero();
+        let part = Float.fromRaw(isPositive = rhs.getSign(), fraction, exponent + rhs.getExponent());
+        let mask = 1;
+        while (~(mask = (16384 * 2))) {
+            if ((rhs.getFraction() & mask) = mask) {
+                let newResult = result.add(part);
+                do result.dispose();
+                let result = newResult;
+            }
+            do part._mulByTwo();
+            let mask = mask + mask;
+        }
+        do part.dispose();
+        return result;
+    }
+
+    method Float sqrt() {
+        var int finalFraction, finalExponent;
+        let finalFraction = fraction;
+        let finalExponent = exponent;
+        // Make the exponent even.
+        if (finalExponent & 1 = 1) {
+            let finalFraction = finalFraction / 2;
+            let finalExponent = finalExponent + 1;
+        }
+        return Float.fromRaw(true, Math.sqrt(finalFraction), finalExponent / 2);
+    }
+
+    method boolean greaterThan(Float rhs) {
+        var boolean whenThisIsBig;
+        if (isPositive & ~rhs.getSign()) {
+            return true;
+        } 
+        if (~isPositive & rhs.getSign()) {
+            return false;
+        } 
+        // If both numbers are negative, we need to return
+        // false if this number has greater magnitude.
+        let whenThisIsBig = isPositive;
+        if (exponent > rhs.getExponent()) {
+            return whenThisIsBig;
+        } 
+        if (rhs.getExponent() > exponent) {
+            return ~whenThisIsBig;
+        } 
+        if (fraction > rhs.getExponent()) {
+            return whenThisIsBig;
+        } 
+        return ~whenThisIsBig;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}
