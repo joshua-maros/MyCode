@@ -19,7 +19,7 @@ class Main {
         do gol.randomize();
         while (true) {
             do gol.performSimulationTick();
-            do gol.draw();
+            // do gol.draw();
         }
         do Output.printString("Done");
 

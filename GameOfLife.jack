@@ -48,7 +48,7 @@ class GameOfLife {
 
     method void performSimulationTick() {
         var Array swapTemp;
-        var int i, neighborhood;
+        var int i, neighborhood, x, y;
         let i = 0;
         while (i < area) {
             let neighborhood = 0;
@@ -67,6 +67,17 @@ class GameOfLife {
             } else {
                 // Become alive if it has 3 neighbors.
                 let scratchboard[i] = neighborhood = 3;
+            }
+            if (~(scratchboard[i] = board[i])) {
+                do Screen.setColor(scratchboard[i]);
+                let y = i / width;
+                let x = i - (y * width);
+                do Screen.drawRectangle(
+                    x * cellSizeInPixels, 
+                    y * cellSizeInPixels, 
+                    (x + 1) * cellSizeInPixels - 1, 
+                    (y + 1) * cellSizeInPixels - 1
+                );
             }
             let i = i + 1;
         }
